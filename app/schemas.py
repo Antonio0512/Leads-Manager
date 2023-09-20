@@ -18,7 +18,7 @@ class UserUpdate(UserBase):
 
 class User(UserBase):
     id: int
-    leads: List["Lead"] = []
+    leads: List = []
 
     class Config:
         from_attributes = True
@@ -52,3 +52,8 @@ class Lead(LeadBase):
 class TokenResponse(BaseModel):
     access_token: str
     user: dict
+
+
+class TokenError(BaseModel):
+    error: dict
+
