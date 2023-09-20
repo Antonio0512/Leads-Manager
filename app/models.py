@@ -17,7 +17,7 @@ class User(Base):
 class Lead(Base):
     __tablename__ = "leads"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     first_name = Column(String)
     last_name = Column(String)

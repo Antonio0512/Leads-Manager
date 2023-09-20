@@ -21,7 +21,7 @@ class User(UserBase):
     leads: List["Lead"] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class LeadBase(BaseModel):
@@ -33,11 +33,12 @@ class LeadBase(BaseModel):
     date_created: datetime
     date_last_updated: datetime
 
-    class Config:
-        arbitrary_types_allowed = True
-
 
 class LeadCreate(LeadBase):
+    pass
+
+
+class LeadUpdate(LeadBase):
     pass
 
 
@@ -45,4 +46,9 @@ class Lead(LeadBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    user: dict
