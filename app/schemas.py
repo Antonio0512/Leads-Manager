@@ -10,6 +10,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    confirm_password: str
 
 
 class UserUpdate(UserBase):
@@ -30,8 +31,8 @@ class LeadBase(BaseModel):
     email: str
     company: str
     note: Optional[str] = None
-    date_created: datetime
-    date_last_updated: datetime
+    date_created: Optional[datetime] = None
+    date_last_updated: Optional[datetime] = None
 
 
 class LeadCreate(LeadBase):
@@ -49,6 +50,10 @@ class Lead(LeadBase):
         from_attributes = True
 
 
+class LeadError(BaseModel):
+    error: dict
+
+
 class TokenResponse(BaseModel):
     access_token: str
     user: dict
@@ -56,4 +61,3 @@ class TokenResponse(BaseModel):
 
 class TokenError(BaseModel):
     error: dict
-

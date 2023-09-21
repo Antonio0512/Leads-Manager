@@ -19,6 +19,9 @@ def register_user(
     if existing_user:
         raise HTTPException(status_code=400, detail="Email is already in use")
 
+    if user_data.password != user_data.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+
     hashed_password = bcrypt.hashpw(user_data.password.encode('utf-8'), bcrypt.gensalt())
 
     user = User(email=user_data.email, password=hashed_password.decode('utf-8'))
@@ -115,39 +118,6 @@ def delete_user(
 
     db.delete(target_user)
     db.commit()
-
-
-def create_lead(db: Session, lead_data: dict):
-    lead = Lead(**lead_data)
-    db.add(lead)
-    db.commit()
-    db.refresh(lead)
-    return lead
-
-
-def get_lead_by_id(db: Session, lead_id: int):
-    return db.query(Lead).filter(Lead.id == lead_id).first()
-
-
-def get_leads(db: Session, skip: int = 0, limit: int = 10000):
-    return db.query(Lead).offset(skip).limit(limit).all()
-
-
-def update_lead(db: Session, lead: Lead, updated_data: dict):
-    for key, value in updated_data.items():
-        setattr(lead, key, value)
-    db.commit()
-    db.refresh(lead)
-    return lead
-
-
-def delete_lead(db: Session, lead_id: int):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
-    if lead:
-        db.delete(lead)
-        db.commit()
-        return True
-    return False
 
 
 def _get_user_by_email(db: Session, email: str):
