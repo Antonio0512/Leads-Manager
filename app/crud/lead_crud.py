@@ -1,16 +1,17 @@
-from datetime import datetime
-
 from fastapi import HTTPException
+
 from sqlalchemy.orm import Session
 
+from datetime import datetime
+
 from app.models import Lead
-from app.schemas import LeadCreate, User
+from app import schemas
 
 
 def create_lead(
-        db: Session,
-        lead_data: LeadCreate,
-        current_user: User
+        lead_data: schemas.LeadCreate,
+        current_user: schemas.User,
+        db: Session
 ):
     required_fields = ['first_name', 'last_name', 'email', 'company']
     missing_fields = [field for field in required_fields if not getattr(lead_data, field, None)]
@@ -33,26 +34,73 @@ def create_lead(
     return lead
 
 
-def get_lead_by_id(db: Session, lead_id: int):
-    return db.query(Lead).filter(Lead.id == lead_id).first()
-
-
-def get_leads(db: Session, skip: int = 0, limit: int = 10000):
+def get_all_leads(
+        db: Session,
+        skip: int = 0,
+        limit: int = 10000
+):
     return db.query(Lead).offset(skip).limit(limit).all()
 
 
-def update_lead(db: Session, lead: Lead, updated_data: dict):
-    for key, value in updated_data.items():
-        setattr(lead, key, value)
+# noinspection PyUnusedLocal
+def get_one_lead(
+        lead_id: int,
+        current_user: schemas.User,
+        db: Session
+):
+    return _get_lead_by_id(lead_id, db)
+
+
+def update_lead(
+        lead_id: int,
+        updated_data: schemas.LeadUpdate,
+        current_user: schemas.User,
+        db: Session,
+):
+    target_lead = _get_lead_by_id(lead_id, db)
+
+    if target_lead.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not authorized!")
+
+    date_created = target_lead.date_created
+
+    if db.query(Lead).filter(Lead.email == target_lead.email, Lead.id != lead_id).first():
+        raise HTTPException(status_code=400, detail="Email already associated with another lead")
+
+    updated_data.date_created = date_created
+    updated_data.date_last_updated = datetime.utcnow()
+
+    for field, value in updated_data.model_dump().items():
+        setattr(target_lead, field, value)
     db.commit()
-    db.refresh(lead)
-    return lead
+    db.refresh(target_lead)
+    return target_lead
 
 
-def delete_lead(db: Session, lead_id: int):
+def delete_lead(
+        lead_id: int,
+        current_user: schemas.User,
+        db: Session
+):
+    target_lead = _get_lead_by_id(lead_id, db)
+
+    if target_lead.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not authorized!")
+
+    db.delete(target_lead)
+    db.commit()
+
+
+def _get_lead_by_id(
+        lead_id: int,
+        db: Session
+):
+    if lead_id < 0:
+        raise HTTPException(status_code=400, detail="User ID must be a positive number")
+
     lead = db.query(Lead).filter(Lead.id == lead_id).first()
-    if lead:
-        db.delete(lead)
-        db.commit()
-        return True
-    return False
+
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    return lead

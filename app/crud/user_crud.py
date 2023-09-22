@@ -1,16 +1,17 @@
+import bcrypt
+
 from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
 from app.config import manager
-from app.models import User, Lead
-from app.schemas import UserCreate, UserUpdate
-import bcrypt
+from app.models import User
+from app.schemas import UserCreate, UserUpdate, User as UserSchema
 
 
 def register_user(
-        db: Session,
-        user_data: UserCreate
+        user_data: UserCreate,
+        db: Session
 ):
     if not user_data:
         raise HTTPException(status_code=400, detail="User data is empty")
@@ -40,9 +41,9 @@ def register_user(
 
 
 def login_user(
-        db: Session,
         email: str,
-        password: str
+        password: str,
+        db: Session,
 ):
     user = db.query(User).filter(User.email == email).first()
 
@@ -50,7 +51,7 @@ def login_user(
         raise HTTPException(status_code=400, detail="Email does not exist")
 
     if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-        raise HTTPException(status_code=400, detail="Invalid password")
+        raise HTTPException(status_code=401, detail="Invalid password")
 
     access_token = manager.create_access_token(
         data={'sub': user.email}
@@ -70,28 +71,26 @@ def get_users(
 
 
 def get_one_user(
-        db: Session,
-        user_id
+        user_id,
+        db: Session
 ):
-    return _get_user_by_id(db, user_id)
+    return _get_user_by_id(user_id, db)
 
 
 def update_user(
-        db: Session,
         user_id: int,
-        current_user: User,
-        updated_data: UserUpdate
+        current_user: UserSchema,
+        updated_data: UserUpdate,
+        db: Session
 ):
-    target_user = _get_user_by_id(db, user_id)
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    target_user = _get_user_by_id(user_id, db)
 
     if current_user.id != target_user.id:
         raise HTTPException(status_code=403, detail="You are not authorized!")
 
     new_email = updated_data.email
     if new_email and new_email != target_user.email:
-        existing_user = _get_user_by_email(db, new_email)
+        existing_user = _get_user_by_email(new_email, db)
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already exists")
 
@@ -105,13 +104,11 @@ def update_user(
 
 
 def delete_user(
-        db: Session,
         user_id: int,
-        current_user: User
+        current_user: User,
+        db: Session
 ):
-    target_user = _get_user_by_id(db, user_id)
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    target_user = _get_user_by_id(user_id, db)
 
     if target_user.id != current_user.id:
         raise HTTPException(status_code=403, detail="You are not authorized!")
@@ -120,13 +117,13 @@ def delete_user(
     db.commit()
 
 
-def _get_user_by_email(db: Session, email: str):
+def _get_user_by_email(email: str, db: Session):
     return db.query(User).filter(User.email == email).first()
 
 
 def _get_user_by_id(
+        user_id: int,
         db: Session,
-        user_id: int
 ):
     if user_id < 0:
         raise HTTPException(status_code=400, detail="User ID must be a positive number")

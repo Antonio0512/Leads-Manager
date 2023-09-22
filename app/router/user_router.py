@@ -1,10 +1,13 @@
 import os
-from typing import Union
-
 import jwt
+
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+
 from sqlalchemy.orm import Session
+
+from typing import Union, Dict
+
 from app import schemas
 from app.crud import user_crud
 from app.config import get_db
@@ -42,7 +45,7 @@ def register_user(
         db: Session = Depends(get_db)
 ):
     try:
-        data = user_crud.register_user(db, user_data)
+        data = user_crud.register_user(user_data, db)
         return schemas.TokenResponse(**data)
     except HTTPException as e:
         return schemas.TokenError(error={"status_code": e.status_code, "error_description": e.detail})
@@ -54,7 +57,7 @@ def login(
         db: Session = Depends(get_db)
 ):
     try:
-        user_data = user_crud.login_user(db, data.username, data.password)
+        user_data = user_crud.login_user(data.username, data.password, db)
         return schemas.TokenResponse(**user_data)
     except HTTPException as e:
         return schemas.TokenError(error={"status_code": e.status_code, "error_description": e.detail})
@@ -74,7 +77,7 @@ def get_user(
         user_id: int,
         db: Session = Depends(get_db)
 ):
-    return user_crud.get_one_user(db, user_id)
+    return user_crud.get_one_user(user_id, db)
 
 
 @user_router.put("users/{id}/update", response_model=schemas.User)
@@ -84,14 +87,14 @@ def update_user(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    return user_crud.update_user(db, user_id, current_user, updated_data)
+    return user_crud.update_user(user_id, current_user, updated_data, db)
 
 
-@user_router.delete("/users/{id}/delete", response_model=None)
+@user_router.delete("/users/{id}/delete", response_model=Dict)
 def delete_user(
         user_id: int,
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    user_crud.delete_user(db, user_id, current_user)
+    user_crud.delete_user(user_id, current_user, db)
     return {"message": "User deleted successfully"}

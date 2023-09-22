@@ -1,7 +1,8 @@
-from typing import Union, Dict
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from typing import Union, Dict, List
 
 from app import schemas
 from app.config import get_db
@@ -14,11 +15,11 @@ lead_router = APIRouter()
 @lead_router.post("/leads/", response_model=Union[Dict[str, schemas.Lead], schemas.LeadError])
 def create_lead(
         lead_data: schemas.LeadCreate,
-        db: Session = Depends(get_db),
-        current_user: schemas.User = Depends(get_current_user)
+        current_user: schemas.User = Depends(get_current_user),
+        db: Session = Depends(get_db)
 ):
     try:
-        lead = lead_crud.create_lead(db, lead_data, current_user)
+        lead = lead_crud.create_lead(lead_data, current_user, db)
         lead_dict = {
             "id": lead.id,
             "first_name": lead.first_name,
@@ -32,3 +33,42 @@ def create_lead(
         return {"lead": lead_dict}
     except HTTPException as e:
         return schemas.LeadError(error={"status_code": e.status_code, "error_description": e.detail})
+
+
+@lead_router.get("/leads/", response_model=List[schemas.Lead])
+def get_all_leads(
+        db: Session = Depends(get_db),
+        skip: int = Query(0, alias="skip"),
+        limit: int = Query(100, alias="limit")
+):
+    return lead_crud.get_all_leads(db, skip, limit)
+
+
+@lead_router.get("/leads/{id}", response_model=schemas.Lead)
+def get_lead(
+        lead_id: int,
+        current_user: schemas.User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    # noinspection PyUnusedLocal
+    return lead_crud.get_one_lead(lead_id, current_user, db)
+
+
+@lead_router.put("/leads/{id}/update", response_model=schemas.Lead)
+def update_lead(
+        lead_id: int,
+        update_data: schemas.LeadUpdate,
+        current_user: schemas.User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+    return lead_crud.update_lead(lead_id, update_data, current_user, db)
+
+
+@lead_router.delete("/leads/{id}/delete", response_model=Dict)
+def delete_lead(
+        lead_id: int,
+        current_user: schemas.User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    lead_crud.delete_lead(lead_id, current_user, db)
+    return {"message": "Lead deleted successfully"}

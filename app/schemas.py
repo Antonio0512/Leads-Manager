@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel
+
+from typing import List, Optional
 
 
 class UserBase(BaseModel):
@@ -14,7 +15,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(UserBase):
-    email: str
+    pass
 
 
 class User(UserBase):
