@@ -39,7 +39,7 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
 
-@user_router.post("/users/", response_model=Union[schemas.TokenResponse, schemas.TokenError])
+@user_router.post("/users", response_model=Union[schemas.TokenResponse, schemas.TokenError])
 def register_user(
         user_data: schemas.UserCreate,
         db: Session = Depends(get_db)
@@ -48,10 +48,10 @@ def register_user(
         data = user_crud.register_user(user_data, db)
         return schemas.TokenResponse(**data)
     except HTTPException as e:
-        return schemas.TokenError(error={"status_code": e.status_code, "error_description": e.detail})
+        raise e
 
 
-@user_router.post("/login/", response_model=Union[schemas.TokenResponse, schemas.TokenError])
+@user_router.post("/login", response_model=Union[schemas.TokenResponse, schemas.TokenError])
 def login(
         data: OAuth2PasswordRequestForm = Depends(),
         db: Session = Depends(get_db)
@@ -63,7 +63,7 @@ def login(
         return schemas.TokenError(error={"status_code": e.status_code, "error_description": e.detail})
 
 
-@user_router.get("/users/")
+@user_router.get("/users")
 def get_users(
         db: Session = Depends(get_db),
         skip: int = Query(0, alias="skip"),

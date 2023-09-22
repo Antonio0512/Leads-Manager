@@ -18,7 +18,7 @@ def register_user(
 
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email is already in use")
+        raise HTTPException(status_code=409, detail="Email is already in use")
 
     if user_data.password != user_data.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
