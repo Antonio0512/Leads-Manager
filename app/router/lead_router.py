@@ -12,7 +12,7 @@ from app.crud import lead_crud
 lead_router = APIRouter()
 
 
-@lead_router.post("/leads/", response_model=Union[Dict[str, schemas.Lead], schemas.LeadError])
+@lead_router.post("/leads", response_model=Union[Dict[str, schemas.Lead], schemas.LeadError])
 def create_lead(
         lead_data: schemas.LeadCreate,
         current_user: schemas.User = Depends(get_current_user),
@@ -35,7 +35,7 @@ def create_lead(
         return schemas.LeadError(error={"status_code": e.status_code, "error_description": e.detail})
 
 
-@lead_router.get("/leads/", response_model=List[schemas.Lead])
+@lead_router.get("/leads", response_model=List[schemas.Lead])
 def get_all_leads(
         db: Session = Depends(get_db),
         skip: int = Query(0, alias="skip"),

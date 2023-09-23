@@ -3,6 +3,7 @@ import jwt
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from jwt import ExpiredSignatureError, DecodeError
 
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,8 @@ from app.models import User
 user_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login/")
+
+
 
 
 def get_current_user(
@@ -34,10 +37,12 @@ def get_current_user(
             raise HTTPException(status_code=401, detail="User not found")
 
         return user
-
+    except ExpiredSignatureError as e:
+        raise HTTPException(status_code=401, detail="JWT token expired: " + str(e))
+    except DecodeError as e:
+        raise HTTPException(status_code=401, detail="JWT token decoding error: " + str(e))
     except Exception:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
-
 
 @user_router.post("/users", response_model=Union[schemas.TokenResponse, schemas.TokenError])
 def register_user(

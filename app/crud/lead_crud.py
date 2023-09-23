@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from datetime import datetime
@@ -39,7 +40,7 @@ def get_all_leads(
         skip: int = 0,
         limit: int = 10000
 ):
-    return db.query(Lead).offset(skip).limit(limit).all()
+    return db.query(Lead).order_by(desc(Lead.date_last_updated)).offset(skip).limit(limit).all()
 
 
 # noinspection PyUnusedLocal
