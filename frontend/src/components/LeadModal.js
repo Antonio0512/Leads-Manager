@@ -1,46 +1,82 @@
-import {useState} from "react";
-import {createLead} from "../services/leadService";
+import {useEffect, useState} from "react";
+import {createLead, getOneLead, updateLead} from "../services/leadService";
 
-export const LeadModal = ({active, handleModal, id, access_token, setError}) => {
-
-    const initialFormData = {
+export const LeadModal = ({active, handleCancel, id, access_token, setError}) => {
+    const [formData, setFormData] = useState({
         first_name: "",
         last_name: "",
         company: "",
         email: "",
         note: "",
-    }
+    });
 
-    const [formData, setFormData] = useState(initialFormData);
+    useEffect(() => {
+        const getLead = async () => {
+            try {
+                const result = await getOneLead(id, access_token);
+                setFormData({
+                    ...formData,
+                    first_name: result.first_name,
+                    last_name: result.last_name,
+                    company: result.company,
+                    email: result.email,
+                    note: result.note,
+                });
+            } catch (error) {
+                setError("Could not get lead");
+            }
+        };
+        if (id) {
+            getLead();
+        } else {
+            cleanFormData();
+        }
+    }, [id, access_token, setError]);
 
-    const {first_name, last_name, company, email, note} = formData;
+    const cleanFormData = () => {
+        setFormData({
+            first_name: "",
+            last_name: "",
+            company: "",
+            email: "",
+            note: "",
+        });
+    };
 
     const onChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
 
-    const cleanFormData = () => {
-        setFormData(initialFormData);
+    const onUpdate = async (e) => {
+        e.preventDefault();
+
+        try {
+            await updateLead(id, formData, access_token);
+            cleanFormData();
+            handleCancel();
+        } catch (error) {
+            setError(error.response.data.detail);
+            handleCancel();
+        }
     };
 
-    const onSubmit = async (e) => {
+    const onCreate = async (e) => {
         e.preventDefault();
 
         try {
             await createLead(formData, access_token);
             cleanFormData();
-            handleModal();
+            handleCancel();
         } catch (error) {
-            setError(error);
+            setError(error.response.data.detail);
+            handleCancel();
         }
     };
 
     return (
         <div className={`modal ${active && "is-active"}`}>
-            <div className="modal-background" onClick={handleModal}></div>
+            <div className="modal-background" onClick={handleCancel}></div>
             <div className="modal-card">
                 <header className="modal-card-head has-background-primary-light">
-                    <h1 className="modal-card-title">
-                        {id ? "Update Lead" : "Create Lead"}
-                    </h1>
+                    <h1 className="modal-card-title">{id ? "Update Lead" : "Create Lead"}</h1>
                 </header>
                 <section className="modal-card-body">
                     <form>
@@ -51,7 +87,7 @@ export const LeadModal = ({active, handleModal, id, access_token, setError}) => 
                                        placeholder="Enter first name"
                                        id="first_name"
                                        name="first_name"
-                                       value={first_name}
+                                       value={formData.first_name}
                                        onChange={(e) => onChange(e)}
                                        className="input"
                                        required
@@ -66,7 +102,7 @@ export const LeadModal = ({active, handleModal, id, access_token, setError}) => 
                                        placeholder="Enter last name"
                                        id="last_name"
                                        name="last_name"
-                                       value={last_name}
+                                       value={formData.last_name}
                                        onChange={(e) => onChange(e)}
                                        className="input"
                                        required
@@ -81,7 +117,7 @@ export const LeadModal = ({active, handleModal, id, access_token, setError}) => 
                                        placeholder="Enter company"
                                        id="company"
                                        name="company"
-                                       value={company}
+                                       value={formData.company}
                                        onChange={(e) => onChange(e)}
                                        className="input"
                                        required
@@ -96,7 +132,7 @@ export const LeadModal = ({active, handleModal, id, access_token, setError}) => 
                                        placeholder="Enter email"
                                        id="email"
                                        name="email"
-                                       value={email}
+                                       value={formData.email}
                                        onChange={(e) => onChange(e)}
                                        className="input"
                                        required
@@ -111,7 +147,7 @@ export const LeadModal = ({active, handleModal, id, access_token, setError}) => 
                                        placeholder="Enter note"
                                        id="note"
                                        name="note"
-                                       value={note}
+                                       value={formData.note}
                                        onChange={(e) => onChange(e)}
                                        className="input"
                                        autoComplete="off"
@@ -121,12 +157,18 @@ export const LeadModal = ({active, handleModal, id, access_token, setError}) => 
                     </form>
                 </section>
                 <footer className="modal-card-foot has-background-primary-light">
-                    {id ?
-                        (<button className="button is-info">Update</button>)
-                        :
-                        (<button className="button is-primary" onClick={(e) => onSubmit(e)}>Create</button>)
-                    }
-                    <button className="button" onClick={handleModal}>Cancel</button>
+                    {id ? (
+                        <button className="button is-info" onClick={(e) => onUpdate(e)}>
+                            Update
+                        </button>
+                    ) : (
+                        <button className="button is-primary" onClick={(e) => onCreate(e)}>
+                            Create
+                        </button>
+                    )}
+                    <button className="button" onClick={handleCancel}>
+                        Cancel
+                    </button>
                 </footer>
             </div>
         </div>

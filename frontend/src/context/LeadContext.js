@@ -15,29 +15,9 @@ export const LeadProvider = ({children}) => {
         }
     };
 
-
-    const createLead = async (credentials, token) => {
-        try {
-            return await leadService.createLead(credentials, token);
-        } catch (error) {
-            throw error;
-        }
-    };
-
-    const deleteLead = async (lead_id, token) => {
-        try {
-            return await leadService.deleteLead(lead_id, token);
-        } catch (error) {
-            throw error
-        }
-    };
-
-
     const leadContextData = {
         leads,
         getAllLeads,
-        createLead,
-        deleteLead
     }
 
 
