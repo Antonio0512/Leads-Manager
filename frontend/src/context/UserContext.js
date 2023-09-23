@@ -29,7 +29,7 @@ export const UserProvider = ({children}) => {
     const userContextData = {
         user,
         setUser,
-        isAuthenticated: user?.token,
+        isAuthenticated: user?.access_token,
         signUp,
         signIn
     };
