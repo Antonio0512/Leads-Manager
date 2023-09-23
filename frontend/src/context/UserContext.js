@@ -16,10 +16,22 @@ export const UserProvider = ({children}) => {
         }
     };
 
+
+    const signIn = async (credentials) => {
+        try {
+            const userData = await userService.singIn(credentials);
+            setUser(userData);
+        } catch (error) {
+            throw error
+        }
+    };
+
     const userContextData = {
         user,
+        setUser,
         isAuthenticated: user?.token,
-        signUp
+        signUp,
+        signIn
     };
 
     return (

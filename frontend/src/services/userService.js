@@ -15,3 +15,22 @@ export const signUp = async (credentials) => {
         throw error;
     }
 };
+
+export const singIn = async (credentials) => {
+    try {
+        const response = await axios.post(
+            "/api/login",
+            JSON.stringify(
+                `grant_type=&username=${credentials.email}&password=${credentials.password}&scope=&client_id=&client_secret=`
+            ),
+            {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};

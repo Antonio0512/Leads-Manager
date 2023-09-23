@@ -60,7 +60,7 @@ def login(
         user_data = user_crud.login_user(data.username, data.password, db)
         return schemas.TokenResponse(**user_data)
     except HTTPException as e:
-        return schemas.TokenError(error={"status_code": e.status_code, "error_description": e.detail})
+        raise e
 
 
 @user_router.get("/users")
