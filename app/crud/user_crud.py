@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
-from app.config import manager
+from app.config import create_access_token
 from app.models import User
 from app.schemas import UserCreate, UserUpdate, User as UserSchema
 
@@ -31,7 +31,7 @@ def register_user(
     db.commit()
     db.refresh(user)
 
-    access_token = manager.create_access_token(
+    access_token = create_access_token(
         data={"sub": user.email}
     )
 
@@ -53,7 +53,7 @@ def login_user(
     if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         raise HTTPException(status_code=401, detail="Invalid password")
 
-    access_token = manager.create_access_token(
+    access_token = create_access_token(
         data={'sub': user.email}
     )
 

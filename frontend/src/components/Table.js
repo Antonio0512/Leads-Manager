@@ -7,8 +7,7 @@ import {LeadModal} from "./LeadModal";
 
 export const Table = () => {
     const {user} = useContext(UserContext);
-    const {leads, getAllLeads} = useContext(LeadContext);
-
+    const {leads, getAllLeads, deleteLead} = useContext(LeadContext);
     const [error, setError] = useState("");
     const [loaded, setLoaded] = useState(false);
     const [activeModal, setActiveModal] = useState(false);
@@ -26,6 +25,15 @@ export const Table = () => {
             getLeads();
         }, []
     )
+
+    const onDelete = async (lead_id) => {
+        try {
+            await deleteLead(lead_id, user.access_token);
+            getAllLeads();
+        } catch (error) {
+            setError("Failed to delete the lead");
+        }
+    };
 
     const handleModal = () => {
         setActiveModal(!activeModal);
@@ -70,7 +78,9 @@ export const Table = () => {
                             <td>{moment(lead.date_last_updated).format("MMM Do YY")}</td>
                             <td>
                                 <button className="button mr-2 is-info is-light">Update</button>
-                                <button className="button mr-2 is-danger is-light">Delete</button>
+                                <button className="button mr-2 is-danger is-light"
+                                        onClick={() => onDelete(lead.id)}>Delete
+                                </button>
                             </td>
                         </tr>
                     ))}

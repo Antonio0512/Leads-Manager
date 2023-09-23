@@ -24,11 +24,20 @@ export const LeadProvider = ({children}) => {
         }
     };
 
+    const deleteLead = async (lead_id, token) => {
+        try {
+            return await leadService.deleteLead(lead_id, token);
+        } catch (error) {
+            throw error
+        }
+    };
+
 
     const leadContextData = {
         leads,
         getAllLeads,
-        createLead
+        createLead,
+        deleteLead
     }
 
 
